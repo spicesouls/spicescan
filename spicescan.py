@@ -1,6 +1,8 @@
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("url", help="The URL Of The Scanning Target", type=str)
+parser.add_argument("-p", help="Enable Portscanning", action="store_true")
+parser.add_argument("-d", help="Enable Web Directory Bruteforcing", action="store_true")
 parser.add_argument("-t", help="The amount of threads you would like to use.", type=int, default=15)
 parser.add_argument("-v", help="Enables verbosity mode", action="store_true")
 args = parser.parse_args()
@@ -110,73 +112,77 @@ try:
 except PermissionError:
 	red('Permission Error: To fingerprint the OS, Please run this with sudo!')
 
+if args.p:
+	# Ports
+	yellow('Attempting to scan ports...\n')
+	openports = []
+	try:
+		print_lock = threading.Lock()
+		def portscan(port):
+			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+			socket.setdefaulttimeout(1) 
+	          
+			# returns an error indicator 
+			result = s.connect_ex((ipaddr,port)) 
+			if result == 0: 
+				with print_lock:
+					green(f'Port Discovered: {port}')
+					openports.append(f'Open Port - {port}')
+			else:
+				with print_lock:
+					if args.v:
+						red(f'Closed Port Discovered: {port}')
+			s.close()
 
-# Ports
-yellow('Attempting to scan ports...\n')
-openports = []
-try:
-	print_lock = threading.Lock()
-	def portscan(port):
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		result = sock.connect_ex((ipaddr, port))
-		if result == 0:
-			with print_lock:
-				green(f'Port Discovered: {port}')
-				openports.append(f'Open Port - {port}')
-				sock.close()
-		else:
-			with print_lock:
-				if args.v:
-					red(f'Closed Port Discovered: {port}')
+		def threader():
+			while True:
+				worker = q.get()
+				portscan(worker)
+				q.task_done()
+		q = Queue()
+		for x in range(userthreadcount):
+			t = threading.Thread(target=threader)
+			t.daemon = True
+			t.start()
+		start = time.time()
+		for worker in range(1, 1000):
+			q.put(worker)
+		q.join()
+	except KeyboardInterrupt:
+		pass
+	print('\n\n')
+	green('Port Scanning Finished.\n\n')
+if args.d:
+	## Web Dirs
+	# Robots.txt
+	yellow('Checking for robots.txt')
+	check(url, 'robots.txt')
+	r = requests.get(url, '/robots.txt')
+	if 'sitemap' in r.text:
+	    for line in r.text.splitlines():
+	        if 'Sitemap:' in line:
+	            print(line.replace('Sitemap: ', ''))
+	            break
 
-	def threader():
-		while True:
-			worker = q.get()
-			portscan(worker)
-			q.task_done()
-	q = Queue()
-	for x in range(1000):
-		t = threading.Thread(target=threader)
-		t.daemon = True
-		t.start()
-	start = time.time()
-	for worker in range(1, int(userthreadcount)):
-		q.put(worker)
-	q.join()
-except KeyboardInterrupt:
-	pass
-print('\n\n')
-green('Port Scanning Finished.\n\n')
+	# Humans.txt #
+	yellow('Checking for humans.txt')
+	check(url, 'humans.txt')
 
-## Web Dirs
-# Robots.txt
-yellow('Checking for robots.txt')
-check(url, 'robots.txt')
-r = requests.get(url, '/robots.txt')
-if 'sitemap' in r.text:
-    for line in r.text.splitlines():
-        if 'Sitemap:' in line:
-            print(line.replace('Sitemap: ', ''))
-            break
+	# DIR LIST #
+	yellow('Checking for generic directories')
+	dir = ['api', 'API', 'src', 'source', 'js', 'java', 'python', 'html', 'db', 'sql', 'cfg', 'config', 'requests', 'login', 'admin']
+	try:
+		for item in dir:
+			check(url, item)
+		with open('directory_list.txt', 'r') as f:
+			lines = f.readlines()
+			linecount = len(lines)
+			print(f'\n--- Going Through directory_list.txt - Lines: {linecount} - Press CNTRL + C To Move On At Any Time ---\n')
+			for line in lines:
+				check(url, line[:-1])
 
-# Humans.txt #
-yellow('Checking for humans.txt')
-check(url, 'humans.txt')
-
-# DIR LIST #
-yellow('Checking for generic directories')
-dir = ['api', 'API', 'src', 'source', 'js', 'java', 'python', 'html', 'db', 'sql', 'cfg', 'config', 'requests', 'login', 'admin']
-try:
-	for item in dir:
-		check(url, item)
-	with open('directory_list.txt', 'r') as f:
-		lines = f.readlines()
-		linecount = len(lines)
-		print(f'\n--- Going Through directory_list.txt - Lines: {linecount} - Press CNTRL + C To Move On At Any Time ---\n')
-		for line in lines:
-			check(url, line[:-1])
-except KeyboardInterrupt:
-	print('\n' * 1000)
+	except KeyboardInterrupt:
+		print('\n' * 1000)
     
 
 
@@ -203,9 +209,11 @@ print(f'                          \033[38;5;201m- {url} -\033[0m')
 print('\n--- Basic Information ---')
 for item in endinfo:
     green(item)
-print('\n--- Open Ports ---')
-for item in openports:
-    green(item)
-print('\n--- Discovered Directories ---')
-for item in validdirs:
-    green('/' + item)
+if args.p:
+	print('\n--- Open Ports ---')
+	for item in openports:
+	    green(item)
+if args.d:
+	print('\n--- Discovered Directories ---')
+	for item in validdirs:
+	    green('/' + item)
