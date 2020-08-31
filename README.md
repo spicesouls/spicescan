@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/spicesouls/spicescan/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/spicesouls/spicescan?color=cyan"></a> <a href="https://beyondr00t.wordpress.com"><img alt="Blog" src="https://img.shields.io/badge/-Blog-cyan"></a> <img alt="GitHub Pipenv locked Python version" src="https://img.shields.io/github/pipenv/locked/python-version/spicesouls/spicescan?color=cyan">
+  <a href="https://github.com/spicesouls/spicescan/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/spicesouls/spicescan"></a> <a href="https://beyondr00t.wordpress.com"><img alt="Blog" src="https://img.shields.io/badge/-Blog-cyan"></a> <img alt="GitHub Pipenv locked Python version" src="https://img.shields.io/github/pipenv/locked/python-version/spicesouls/spicescan?color=cyan">
 </p>
 <p align="center">
   <a href="https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2Fspicesouls%2Fspicescan"><img alt="Twitter" src="https://img.shields.io/twitter/url?style=social&url=https://github.com/spicescan"></a> <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/SpicySoulsV?style=social">
